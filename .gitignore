@@ -1,0 +1,129 @@
+# ==========================================
+# Global
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+*.sqlite3
+*.db
+.DS_Store
+.env
+.env.local
+*.bak
+*.swp
+*.swo
+.vscode/
+.idea/
+*.iml
+
+# ==========================================
+# Python / Django (Backend)
+# ==========================================
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Django stuff
+/staticfiles/
+/media/
+/node_modules/
+/db.sqlite3
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.pot
+*.mo
+*.pycache/
+*.pytest_cache/
+local_settings.py
+celerybeat-schedule
+instance/
+uploads/
+*.egg-info/
+.coverage
+*.cover
+*.log
+*.pid
+*.seed
+*.out
+*.manifest
+*.spec
+
+# Gunicorn
+gunicorn.pid
+
+# ==========================================
+# React (Frontend)
+# ==========================================
+# dependencies
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.js
+
+# testing
+frontend/coverage/
+frontend/jest.config.js
+
+# production
+frontend/build/
+frontend/dist/
+
+# misc
+frontend/.DS_Store
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/package-lock.json
+frontend/.eslintcache
+frontend/.parcel-cache/
+frontend/.turbo/
+frontend/.next/
+frontend/out/
+frontend/tmp/
+
+# ==========================================
+# OS / Editor
+# ==========================================
+Thumbs.db
+ehthumbs.db
+*.stackdump
+*.orig
+*.rej
+*.sublime-workspace
+*.sublime-project
+
+
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
