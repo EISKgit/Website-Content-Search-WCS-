@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 
 load_dotenv()
 
-# ------------------- Utility Functions -------------------
+#  utility functions 
 
 def upsert_in_batches(qdrant_client, collection_name, points, batch_size=50, retries=3):
     for i in range(0, len(points), batch_size):
@@ -65,7 +65,7 @@ def summarize_with_chatgroq(text):
         return text[:300]
 
 
-# ------------------- Initialization -------------------
+#  initialization 
 
 SENTENCE_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -75,7 +75,7 @@ COLLECTION_NAME = "html_chunks"
 
 qdrant = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, timeout=60)
 
-# ------------------- Main API View -------------------
+#  main API View 
 
 class SearchAPIView(APIView):
     def post(self, request):
@@ -90,7 +90,7 @@ class SearchAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 1. Fetch HTML
+        # fetch HTML
         try:
             resp = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
             resp.raise_for_status()
@@ -101,7 +101,7 @@ class SearchAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 2. Parse and clean HTML
+        # parse and clean HTML
         soup = BeautifulSoup(html, "html.parser")
         for s in soup(["script", "style", "noscript", "header", "footer", "svg"]):
             s.decompose()
@@ -110,7 +110,7 @@ class SearchAPIView(APIView):
             [line.strip() for line in soup.get_text(separator="\n").splitlines() if line.strip()]
         )
 
-        # 3. Tokenize and chunk
+        #  tokenize and chunk
         words = word_tokenize(text)
         max_tokens = 1000
         chunks = []
@@ -118,10 +118,10 @@ class SearchAPIView(APIView):
             chunk_text = " ".join(words[i:i + max_tokens])
             if not chunk_text.strip():
                 continue
-            # Try to extract the most readable section of the page
+            # try to extract the most readable section of the page
             candidates = []
 
-            # Priority tags that usually hold main content
+            # priority tags that usually hold main content
             for selector in [
                 "main",
                 "article",
@@ -142,29 +142,29 @@ class SearchAPIView(APIView):
                 if tag and len(tag.get_text(strip=True)) > 200:
                     candidates.append(tag)
 
-            # If nothing found, fallback to the largest text block
+            # if nothing found, fallback to the largest text block
             if not candidates:
                 all_divs = soup.find_all(["div", "section", "article"])
                 largest = max(all_divs, key=lambda d: len(d.get_text(strip=True)), default=None)
                 if largest and len(largest.get_text(strip=True)) > 200:
                     candidates.append(largest)
 
-            # Choose the most text-heavy section
+            # choose the most text-heavy section
             main_content = max(
                 candidates, key=lambda el: len(el.get_text(strip=True)), default=soup.body
             )
 
-            #  Clean up unwanted elements (navigation, ads, buttons, etc.)
+            #  clean up unwanted elements 
             for junk in main_content.find_all(
                 ["nav", "aside", "footer", "form", "button", "svg", "script", "style", "noscript", "header", "iframe", "input"]
             ):
                 junk.decompose()
 
 
-            # Extract prettified but readable subset
+            # extract prettified readable subset
             html_text = str(main_content) if main_content else soup.prettify()
 
-            # Truncate intelligently (after cleaning, not mid-tag)
+            # Truncate 
             if len(html_text) > 2000:
                 html_pretty_safe = html_text[:2000] + "\n<!-- [truncated for performance] -->"
             else:
@@ -180,7 +180,7 @@ class SearchAPIView(APIView):
         if not chunks:
             return Response({"detail": "No textual content found."}, status=400)
 
-        # 4. Dynamic per-domain collection
+        #  dynamic per domain collection
         domain = urlparse(url).netloc.replace(".", "_")
         COLLECTION_NAME = f"html_chunks_{domain}"
 
@@ -207,7 +207,7 @@ class SearchAPIView(APIView):
 
         ensure_collection(COLLECTION_NAME)
 
-        # 5. Delete any previously stored chunks for this URL
+        # delete any previously stored chunks for this URL
         try:
             qdrant.delete(
                 collection_name=COLLECTION_NAME,
@@ -221,19 +221,19 @@ class SearchAPIView(APIView):
         except Exception as e:
             print(f"Warning: could not delete old chunks for {url}: {e}")
 
-        # 6. Embed and store new content (with readable HTML preview)
+        # embed and store new content 
         points = []
         for idx, chunk in enumerate(chunks):
             vector = SENTENCE_MODEL.encode(chunk["text"]).tolist()
             html_pretty_full = chunk["html_pretty"]
 
-            # Extract main readable HTML
+            # extract main readable HTML
             soup = BeautifulSoup(html_pretty_full, "html.parser")
             for tag in soup(["script", "style", "noscript", "iframe", "svg", "header", "footer"]):
                 tag.decompose()
             readable_html = soup.prettify()
 
-            # Limit size for performance
+            # limit size 
             MAX_LEN = 2000
             if len(readable_html) > MAX_LEN:
                 readable_html_safe = readable_html[:MAX_LEN] + "\n<!-- [truncated for performance] -->"
@@ -263,7 +263,7 @@ class SearchAPIView(APIView):
 
         upsert_in_batches(qdrant, COLLECTION_NAME, points)
 
-        # 7. Semantic search
+        # semantic search
         query_vec = SENTENCE_MODEL.encode(query).tolist()
         search_result = qdrant.search(
             collection_name=COLLECTION_NAME,
@@ -274,7 +274,7 @@ class SearchAPIView(APIView):
             },
         )
 
-        # 8. Prepare structured response
+        # prepare structured response
         results = []
         for item in search_result:
             payload = item.payload or {}

@@ -30,7 +30,7 @@ export default function Search() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!url || !query) {
       toast({
         title: "Missing Information",
@@ -46,9 +46,9 @@ export default function Search() {
       const res = await axios.post(
         `${apiBase}/api/search/`,
         { url, query },
-        { 
-          headers: { "Content-Type": "application/json" }, 
-          timeout: 90000 
+        {
+          headers: { "Content-Type": "application/json" },
+          timeout: 90000
         }
       );
       setResults(res.data.results || []);
@@ -188,9 +188,12 @@ export default function Search() {
                         </div>
                       )}
                     </CardHeader>
-                    <CardContent>
-                      <HtmlToggleView html={result.html_pretty} text={result.text} />
+                    <CardContent className="max-h-80 overflow-y-auto border-t pt-4 scroll-smooth">
+                      <div className="pr-2">
+                        <HtmlToggleView html={result.html_pretty} text={result.text} />
+                      </div>
                     </CardContent>
+
                   </Card>
                 </motion.div>
               ))}
